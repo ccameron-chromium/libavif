@@ -22,7 +22,6 @@ avifBool avifGainMapMetadataDoubleToFractions(avifGainMapMetadata * dst, const a
     }
     AVIF_CHECK(avifDoubleToUnsignedFraction(src->baseHdrHeadroom, &dst->baseHdrHeadroomN, &dst->baseHdrHeadroomD));
     AVIF_CHECK(avifDoubleToUnsignedFraction(src->alternateHdrHeadroom, &dst->alternateHdrHeadroomN, &dst->alternateHdrHeadroomD));
-    dst->backwardDirection = src->backwardDirection;
     dst->useBaseColorSpace = src->useBaseColorSpace;
     return AVIF_TRUE;
 }
@@ -50,7 +49,6 @@ avifBool avifGainMapMetadataFractionsToDouble(avifGainMapMetadataDouble * dst, c
     }
     dst->baseHdrHeadroom = (double)src->baseHdrHeadroomN / src->baseHdrHeadroomD;
     dst->alternateHdrHeadroom = (double)src->alternateHdrHeadroomN / src->alternateHdrHeadroomD;
-    dst->backwardDirection = src->backwardDirection;
     dst->useBaseColorSpace = src->useBaseColorSpace;
     return AVIF_TRUE;
 }
@@ -82,8 +80,8 @@ static float avifGetGainMapWeight(float hdrHeadroom, const avifGainMapMetadataDo
         return 0.0f;
     }
     float w = AVIF_CLAMP((hdrHeadroom - baseHdrHeadroom) / (alternateHdrHeadroom - baseHdrHeadroom), 0.0f, 1.0f);
-    if (metadata->backwardDirection) {
-        w *= -1.0f;
+    if (alternateHdrHeadroom < baseHdrHeadroom) {
+        w = -w;
     }
     return w;
 }

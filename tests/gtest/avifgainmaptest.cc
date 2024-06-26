@@ -44,13 +44,17 @@ void CheckGainMapMetadataMatches(const avifGainMapMetadata& lhs,
   }
 }
 
-avifGainMapMetadata GetTestGainMapMetadata() {
+avifGainMapMetadata GetTestGainMapMetadata(bool base_rendition_is_hdr) {
   avifGainMapMetadata metadata = {};
   metadata.useBaseColorSpace = true;
   metadata.baseHdrHeadroomN = 0;
   metadata.baseHdrHeadroomD = 1;
   metadata.alternateHdrHeadroomN = 6;
   metadata.alternateHdrHeadroomD = 2;
+  if (base_rendition_is_hdr) {
+    std::swap(metadata.baseHdrHeadroomN, metadata.alternateHdrHeadroomN);
+    std::swap(metadata.baseHdrHeadroomD, metadata.alternateHdrHeadroomD);
+  }
   for (int c = 0; c < 3; ++c) {
     metadata.baseOffsetN[c] = 10 * c;
     metadata.baseOffsetD[c] = 1000;
@@ -90,7 +94,7 @@ ImagePtr CreateTestImageWithGainMap(bool base_rendition_is_hdr) {
     return nullptr;
   }
   image->gainMap->image = gain_map.release();  // 'image' now owns the gain map.
-  image->gainMap->metadata = GetTestGainMapMetadata();
+  image->gainMap->metadata = GetTestGainMapMetadata(base_rendition_is_hdr);
 
   if (base_rendition_is_hdr) {
     image->clli.maxCLL = 10;
@@ -358,7 +362,8 @@ TEST(GainMapTest, EncodeDecodeGrid) {
   constexpr int kCellWidth = 128;
   constexpr int kCellHeight = 200;
 
-  avifGainMapMetadata gain_map_metadata = GetTestGainMapMetadata();
+  avifGainMapMetadata gain_map_metadata =
+      GetTestGainMapMetadata(/*base_rendition_is_hdr=*/true);
 
   for (int i = 0; i < kGridCols * kGridRows; ++i) {
     ImagePtr image =
@@ -452,7 +457,8 @@ TEST(GainMapTest, InvalidGrid) {
   constexpr int kGridCols = 2;
   constexpr int kGridRows = 2;
 
-  avifGainMapMetadata gain_map_metadata = GetTestGainMapMetadata();
+  avifGainMapMetadata gain_map_metadata =
+      GetTestGainMapMetadata(/*base_rendition_is_hdr=*/true);
 
   for (int i = 0; i < kGridCols * kGridRows; ++i) {
     ImagePtr image =

@@ -661,9 +661,9 @@ avifResult avifRGBImageComputeGainMap(const avifRGBImage * baseRgbImage,
     gainMapMetadata.baseHdrHeadroom = log2f(AVIF_MAX(baseMax, kEpsilon));
     gainMapMetadata.alternateHdrHeadroom = log2f(AVIF_MAX(altMax, kEpsilon));
     if (gainMapMetadata.baseHdrHeadroom > gainMapMetadata.alternateHdrHeadroom) {
-        for (int j = 0; j < height; ++j) {
-            for (int i = 0; i < width; ++i) {
-                for (int c = 0; c < numGainMapChannels; ++c) {
+        for (int c = 0; c < numGainMapChannels; ++c) {
+            for (int j = 0; j < height; ++j) {
+                for (int i = 0; i < width; ++i) {
                     gainMapF[c][j * width + i] *= -1.f;
                 }
             }

@@ -79,11 +79,8 @@ static float avifGetGainMapWeight(float hdrHeadroom, const avifGainMapMetadataDo
         // This case is not handled in the specification and does not make practical sense.
         return 0.0f;
     }
-    float w = AVIF_CLAMP((hdrHeadroom - baseHdrHeadroom) / (alternateHdrHeadroom - baseHdrHeadroom), 0.0f, 1.0f);
-    if (alternateHdrHeadroom < baseHdrHeadroom) {
-        w = -w;
-    }
-    return w;
+    const float w = AVIF_CLAMP((hdrHeadroom - baseHdrHeadroom) / (alternateHdrHeadroom - baseHdrHeadroom), 0.0f, 1.0f);
+    return (alternateHdrHeadroom < baseHdrHeadroom) ? -w : w;
 }
 
 // Linear interpolation between 'a' and 'b' (returns 'a' if w == 0.0f, returns 'b' if w == 1.0f).
@@ -658,6 +655,21 @@ avifResult avifRGBImageComputeGainMap(const avifRGBImage * baseRgbImage,
         }
     }
 
+    // Compute the headroom for the base and alterate images. The gainmap is the log-ratio of the
+    // higher-headroom (more HDR) image to the lower-headroom (less HDR) image. Reverse the gainmap
+    // if this is the case.
+    gainMapMetadata.baseHdrHeadroom = log2f(AVIF_MAX(baseMax, kEpsilon));
+    gainMapMetadata.alternateHdrHeadroom = log2f(AVIF_MAX(altMax, kEpsilon));
+    if (gainMapMetadata.baseHdrHeadroom > gainMapMetadata.alternateHdrHeadroom) {
+        for (int j = 0; j < height; ++j) {
+            for (int i = 0; i < width; ++i) {
+                for (int c = 0; c < numGainMapChannels; ++c) {
+                    gainMapF[c][j * width + i] *= -1.f;
+                }
+            }
+        }
+    }
+
     // Find approximate min/max for each channel, discarding outliers.
     float gainMapMinLog2[3] = { 0.0f, 0.0f, 0.0f };
     float gainMapMaxLog2[3] = { 0.0f, 0.0f, 0.0f };
@@ -672,8 +684,6 @@ avifResult avifRGBImageComputeGainMap(const avifRGBImage * baseRgbImage,
     for (int c = 0; c < 3; ++c) {
         gainMapMetadata.gainMapMin[c] = gainMapMinLog2[singleChannel ? 0 : c];
         gainMapMetadata.gainMapMax[c] = gainMapMaxLog2[singleChannel ? 0 : c];
-        gainMapMetadata.baseHdrHeadroom = log2f(AVIF_MAX(baseMax, kEpsilon));
-        gainMapMetadata.alternateHdrHeadroom = log2f(AVIF_MAX(altMax, kEpsilon));
         // baseOffset, alternateOffset and gainMapGamma are all left to their default values.
         // They could be tweaked based on the images to optimize quality/compression.
     }

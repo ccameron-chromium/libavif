@@ -9,6 +9,7 @@ The changes are relative to the previous release, unless the baseline is specifi
 ## [Unreleased]
 
 ### Added since 1.0.0
+* Remove backwardDirection from `avifGainMapMetadata`.
 * Add experimental API for reading and writing gain maps in AVIF files.
   If enabled at compile time, add `gainMap` field to `avifImage`,
   add `qualityGainMap` field to `avifEncoder`, add `gainMapPresent`,
